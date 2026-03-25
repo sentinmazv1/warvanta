@@ -28,7 +28,7 @@ export default async function PersonnelPage() {
         </div>
       </div>
 
-      <EmployeeList initialEmployees={employees} />
+      <EmployeeList />
     </div>
   );
 }
