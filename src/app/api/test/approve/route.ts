@@ -1,4 +1,6 @@
-import { approveApplication, getApplications } from "@/lib/actions/auth";
+import { getApplications } from "@/lib/actions/master";
+import { approveApplication } from "@/lib/actions/master";
+
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 

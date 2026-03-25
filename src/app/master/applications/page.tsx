@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getApplications, approveApplication, rejectApplication, deleteApplication } from "@/lib/actions/auth";
+import { getApplications, approveApplication, rejectApplication, deleteApplication } from "@/lib/actions/master";
 import { CheckCircle2, XCircle, Clock, Building2, User, Mail, ShieldCheck, Loader2, Phone, Briefcase, Users, MessageSquare, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
