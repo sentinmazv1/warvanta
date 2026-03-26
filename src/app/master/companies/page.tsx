@@ -22,8 +22,9 @@ export default function ActiveCompaniesPage() {
   async function loadCompanies() {
     setIsLoading(true);
     try {
-      const data = await getActiveCompanies();
-      setCompanies(data);
+      const { data, error } = await getActiveCompanies();
+      if (error) throw new Error(error);
+      setCompanies(data || []);
     } catch (err: any) {
       console.error(err);
       alert("Şirket verileri yüklenirken hata: " + (err.message || "Bilinmeyen hata"));
@@ -32,8 +33,8 @@ export default function ActiveCompaniesPage() {
     }
   }
 
-  const filteredCompanies = companies.filter((c) =>
-    c.name.toLowerCase().includes(searchQuery.toLowerCase()),
+  const filteredCompanies = (companies || []).filter((c) =>
+    (c.name || "").toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (

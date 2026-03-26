@@ -17,8 +17,9 @@ export default function AdminApplicationsPage() {
   async function loadApps() {
     setIsLoading(true);
     try {
-      const data = await getApplications();
-      setApps(data);
+      const { data, error } = await getApplications();
+      if (error) throw new Error(error);
+      setApps(data || []);
     } catch (err: any) {
       console.error(err);
       alert("Başvurular yüklenirken hata: " + (err.message || "Bilinmeyen hata"));

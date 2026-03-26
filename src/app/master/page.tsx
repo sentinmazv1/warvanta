@@ -13,13 +13,17 @@ import { redirect } from "next/navigation";
 export const dynamic = "force-dynamic";
 
 export default async function MasterDashboardPage() {
-  let stats;
-  try {
-    stats = await getPlatformStats();
-  } catch (error) {
-    // Let the layout handle the unauthorized state
-    return null;
+  const { data: stats, error } = await getPlatformStats();
+
+  if (error) {
+    return (
+      <div className="p-12 text-center bg-red-50 border border-red-100 rounded-[2.5rem] text-red-600 font-bold">
+        Veriler yüklenirken bir hata oluştu: {error}
+      </div>
+    );
   }
+
+  if (!stats) return null;
 
   const statCards = [
     {

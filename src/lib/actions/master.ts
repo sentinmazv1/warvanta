@@ -8,10 +8,17 @@ import { revalidatePath } from "next/cache";
 const SUPERADMIN_EMAILS = ["ibrahimsentinmaz@gmail.com"];
 
 // Initialize Supabase with the SERVICE_ROLE key to bypass RLS.
-// WARNING: This client should ONLY be used in secure server actions for master admin tasks.
+// This is critical for platform-wide aggregation.
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !serviceRoleKey) {
+  console.error("CRITICAL: Supabase environment variables are missing!");
+}
+
 const masterSupabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  supabaseUrl || "",
+  serviceRoleKey || ""
 );
 
 /**
@@ -88,15 +95,18 @@ export async function getPlatformStats() {
       .limit(5);
 
     return {
-      totalCompanies: totalCompanies || 0,
-      totalUsers: totalUsers || 0,
-      pendingApps: pendingApps || 0,
-      activeSubs: activeSubs || 0,
-      recentCompanies: recentCompanies || [],
+      data: {
+        totalCompanies: totalCompanies || 0,
+        totalUsers: totalUsers || 0,
+        pendingApps: pendingApps || 0,
+        activeSubs: activeSubs || 0,
+        recentCompanies: recentCompanies || [],
+      },
+      error: null
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching platform stats:", error);
-    throw new Error("Failed to fetch platform statistics.");
+    return { data: null, error: error.message || "Failed to fetch platform statistics." };
   }
 }
 
@@ -115,10 +125,10 @@ export async function getActiveCompanies() {
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    return companies || [];
-  } catch (error) {
+    return { data: companies || [], error: null };
+  } catch (error: any) {
     console.error("Error fetching companies:", error);
-    throw new Error("Failed to fetch companies.");
+    return { data: [], error: error.message || "Failed to fetch companies." };
   }
 }
 
@@ -129,13 +139,18 @@ export async function getApplications() {
   const isSuperadmin = await checkSuperadmin();
   if (!isSuperadmin) throw new Error("Unauthorized");
 
-  const { data, error } = await masterSupabase
-    .from("company_applications")
-    .select("*")
-    .order("created_at", { ascending: false });
+  try {
+    const { data, error } = await masterSupabase
+      .from("company_applications")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-  if (error) throw error;
-  return data;
+    if (error) throw error;
+    return { data: data || [], error: null };
+  } catch (error: any) {
+    console.error("Error in getApplications:", error);
+    return { data: [], error: error.message || "Failed to fetch applications." };
+  }
 }
 
 /**
