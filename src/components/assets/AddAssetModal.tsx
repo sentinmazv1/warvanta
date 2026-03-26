@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Laptop, Smartphone, Monitor, Briefcase, Hash, Save, Loader2, MapPin } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { addAsset } from "@/lib/actions/assets";
+import { getEmployees } from "@/lib/actions/employees";
+import { Employee } from "@/lib/types";
 
 interface AddAssetModalProps {
   isOpen: boolean;
@@ -19,16 +21,24 @@ const ASSET_TYPES = [
 ];
 
 export default function AddAssetModal({ isOpen, onClose, onSuccess }: AddAssetModalProps) {
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [formData, setFormData] = useState({
     name: "",
     type: "COMPUTER",
     serial_no: "",
     model: "",
-    location: "Merkez"
+    location: "Merkez",
+    employee_id: ""
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (isOpen) {
+      getEmployees().then(setEmployees).catch(console.error);
+    }
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +49,7 @@ export default function AddAssetModal({ isOpen, onClose, onSuccess }: AddAssetMo
       await addAsset(formData as any);
       onSuccess();
       onClose();
-      setFormData({ name: "", type: "COMPUTER", serial_no: "", model: "", location: "Merkez" });
+      setFormData({ name: "", type: "COMPUTER", serial_no: "", model: "", location: "Merkez", employee_id: "" });
     } catch (err: any) {
       setError(err.message || "Bir hata oluştu.");
     } finally {
@@ -131,6 +141,20 @@ export default function AddAssetModal({ isOpen, onClose, onSuccess }: AddAssetMo
                       />
                     </div>
                   </div>
+               </div>
+
+               <div className="space-y-1.5 pt-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Zimmetlenecek Personel (Opsiyonel)</label>
+                  <select 
+                    className="w-full px-5 py-3 rounded-2xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-bold appearance-none"
+                    value={formData.employee_id}
+                    onChange={(e) => setFormData({...formData, employee_id: e.target.value})}
+                  >
+                    <option value="">Depoda Kalsın (Boşta)</option>
+                    {employees.map(emp => (
+                      <option key={emp.id} value={emp.id}>{emp.first_name} {emp.last_name}</option>
+                    ))}
+                  </select>
                </div>
             </div>
 

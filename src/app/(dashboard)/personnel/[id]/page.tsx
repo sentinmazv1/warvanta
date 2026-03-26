@@ -7,8 +7,10 @@ import {
   ArrowLeft, Mail, Phone, Calendar, MapPin, 
   Briefcase, CreditCard, Save, Loader2, Camera,
   FileText, Clock, Shield, CheckCircle2, Trash2,
-  Hash, Users, Droplets as DropletsIcon, Heart as HeartIcon, GraduationCap as GraduationCapIcon, Lightbulb as LightbulbIcon, Download as DownloadIcon
+  Hash, Users, Droplets as DropletsIcon, Heart as HeartIcon, GraduationCap as GraduationCapIcon, Lightbulb as LightbulbIcon, Download as DownloadIcon,
+  Laptop, Smartphone, Monitor
 } from "lucide-react";
+import { getEmployeeAssets } from "@/lib/actions/assets";
 import { Employee } from "@/lib/types";
 import Link from "next/link";
 
@@ -17,6 +19,7 @@ export default function PersonnelDetailPage() {
   const router = useRouter();
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [documents, setDocuments] = useState<any[]>([]);
+  const [assets, setAssets] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
@@ -26,8 +29,18 @@ export default function PersonnelDetailPage() {
     if (id) {
         loadEmployee();
         loadDocuments();
+        loadAssets();
     }
   }, [id]);
+
+  async function loadAssets() {
+    try {
+        const data = await getEmployeeAssets(id as string);
+        setAssets(data);
+    } catch (err) {
+        console.error("Error loading assets:", err);
+    }
+  }
 
   async function loadDocuments() {
     try {
@@ -295,6 +308,43 @@ export default function PersonnelDetailPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 flex flex-col gap-4">
                 <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-bold text-slate-800 text-sm">Zimmetli Varlıklar</h4>
+                    <span className="bg-orange-50 text-orange-600 text-[10px] font-black px-2 py-0.5 rounded-lg shadow-sm">{assets.length} VARLIK</span>
+                </div>
+                <div className="space-y-2">
+                    {assets.map(asset => (
+                        <div key={asset.id} className="bg-slate-50 rounded-2xl p-4 flex items-center justify-between border border-slate-100">
+                             <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm text-blue-500">
+                                    <AssetIconSmall type={asset.type} />
+                                </div>
+                                <div className="max-w-[120px]">
+                                    <p className="text-xs font-bold text-slate-900 truncate">{asset.name}</p>
+                                    <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest truncate">{asset.serial_no || 'SERİ NO YOK'}</p>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={async () => {
+                                    if (confirm("Bu zimmeti iade almak istediğinize emin misiniz?")) {
+                                        const { returnAsset } = await import("@/lib/actions/assets");
+                                        await returnAsset(asset.id);
+                                        loadAssets();
+                                    }
+                                }}
+                                className="text-[9px] font-black text-red-500 hover:underline uppercase"
+                            >
+                                İade Al
+                            </button>
+                        </div>
+                    ))}
+                    {assets.length === 0 && (
+                        <p className="text-[10px] text-slate-400 italic text-center py-4 bg-slate-50 rounded-2xl">Zimmetlenmiş varlık bulunmuyor.</p>
+                    )}
+                </div>
+            </div>
+
+            <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 flex flex-col gap-4">
+                <div className="flex items-center justify-between mb-2">
                     <h4 className="font-bold text-slate-800 text-sm">Yüklenen Dosyalar</h4>
                     <span className="bg-blue-50 text-blue-600 text-[10px] font-black px-2 py-0.5 rounded-lg shadow-sm">{documents.length} DOSYA</span>
                 </div>
@@ -329,6 +379,15 @@ export default function PersonnelDetailPage() {
       </div>
     </div>
   );
+}
+
+function AssetIconSmall({ type }: { type: string }) {
+    switch (type) {
+      case 'COMPUTER': return <Laptop size={14} />;
+      case 'PHONE': return <Smartphone size={14} />;
+      case 'MONITOR': return <Monitor size={14} />;
+      default: return <Briefcase size={14} />;
+    }
 }
 
 function DetailItem({ icon, label, value, type = "text", onChange }: { icon: React.ReactNode, label: string, value: string, type?: string, onChange?: (val: string) => void }) {

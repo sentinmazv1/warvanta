@@ -18,6 +18,7 @@ export default function AssetList() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [showOnlyAvailable, setShowOnlyAvailable] = useState(false);
 
   useEffect(() => {
     loadAssets();
@@ -44,28 +45,40 @@ export default function AssetList() {
     }
   };
 
-  const filtered = assets.filter(a => 
-    a.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    a.serial_no?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filtered = assets.filter(a => {
+    const matchesSearch = a.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         a.serial_no?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesAvailability = showOnlyAvailable ? a.status === 'AVAILABLE' : true;
+    return matchesSearch && matchesAvailability;
+  });
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-          <input 
-            type="text" 
-            placeholder="Ürün adı veya seri no ile ara..."
-            className="w-full pl-12 pr-4 py-3 rounded-2xl bg-white border border-slate-100 shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-medium"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex items-center gap-4 flex-1 max-w-2xl">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <input 
+              type="text" 
+              placeholder="Ürün adı veya seri no ile ara..."
+              className="w-full pl-12 pr-4 py-3 rounded-2xl bg-white border border-slate-100 shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm font-medium"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <button 
+            onClick={() => setShowOnlyAvailable(!showOnlyAvailable)}
+            className={`flex items-center gap-2 px-4 py-3 rounded-2xl border transition-all text-sm font-bold shadow-sm whitespace-nowrap ${
+              showOnlyAvailable 
+                ? 'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-emerald-900/5' 
+                : 'bg-white text-slate-500 border-slate-100 hover:bg-slate-50'
+            }`}
+          >
+            <Filter size={16} />
+            Sadece Boştakiler
+          </button>
         </div>
         <div className="flex items-center gap-3">
-          <button className="p-3 bg-white border border-slate-100 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
-            <Filter size={18} />
-          </button>
           <button 
             onClick={() => setIsAddModalOpen(true)}
             className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-lg shadow-blue-900/10 hover:bg-blue-700 hover:-translate-y-0.5 transition-all"

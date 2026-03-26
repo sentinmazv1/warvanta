@@ -31,6 +31,22 @@ export async function getAssets() {
   return data as any[];
 }
 
+export async function getEmployeeAssets(employeeId: string) {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('assets')
+    .select('*')
+    .eq('employee_id', employeeId)
+    .order('assigned_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching employee assets:', error);
+    return [];
+  }
+
+  return data as any[];
+}
+
 export async function addAsset(formData: Partial<Asset>) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -49,12 +65,27 @@ export async function addAsset(formData: Partial<Asset>) {
     .insert([{
       ...formData,
       company_id: profile.company_id,
-      status: 'AVAILABLE'
+      status: formData.employee_id ? 'ASSIGNED' : 'AVAILABLE',
+      assigned_at: formData.employee_id ? new Date().toISOString() : null
     }])
     .select()
     .single();
 
   if (error) throw error;
+
+  // If assigned, add a log entry
+  if (formData.employee_id) {
+    await supabase
+      .from('asset_logs')
+      .insert([{
+        asset_id: data.id,
+        employee_id: formData.employee_id,
+        action: 'ASSIGN',
+        note: 'Yeni kayıt ile birlikte zimmetlendi.',
+        created_by: user.id
+      }]);
+  }
+
   revalidatePath('/assets');
   return data;
 }

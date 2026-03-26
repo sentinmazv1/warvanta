@@ -209,13 +209,17 @@ function LandingPage() {
           </Link>
         </div>
 
-        {/* Mobile Menu Toggle */}
-        <button 
-          className="md:hidden p-2 text-slate-600 hover:bg-slate-50 rounded-xl"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        >
-          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        <div className="flex items-center gap-2 md:hidden">
+          <Link href="/login" className="text-xs font-bold text-slate-600 px-3 py-1.5 hover:text-blue-600 transition-colors">
+            Giriş
+          </Link>
+          <button 
+            className="p-2 text-slate-600 hover:bg-slate-50 rounded-xl"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
       </nav>
 
       {/* Mobile Menu Drawer */}

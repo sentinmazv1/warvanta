@@ -118,6 +118,27 @@ export default function PuantajPage() {
     }
   };
 
+  const handleRowFill = async (employeeId: string, status: PuantajStatus) => {
+    if (!confirm(`Tüm ayı '${STATUS_CONFIG[status].label}' olarak doldurmak istediğinize emin misiniz?`)) return;
+    setIsLoading(true);
+    try {
+      const promises = daysArray.map(day => {
+        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        return savePuantajRecord({
+          employee_id: employeeId,
+          attendance_date: dateStr,
+          status: status
+        });
+      });
+      await Promise.all(promises);
+      loadData();
+    } catch (err) {
+       console.error("Failed to fill row:", err);
+    } finally {
+       setIsLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-[1600px] mx-auto space-y-8 p-4 md:p-8">
       {/* Header */}
@@ -213,6 +234,15 @@ export default function PuantajPage() {
                         <div className="font-bold text-sm text-slate-900 whitespace-nowrap">{emp.first_name} {emp.last_name}</div>
                         <div className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">{emp.position_name || 'Pozisyon Belirtilmemiş'}</div>
                       </div>
+                      
+                      {/* Row Fill Action */}
+                      <button 
+                         onClick={() => handleRowFill(emp.id, 'M')}
+                         title="Tüm Ayı Mesai Yap"
+                         className="opacity-0 group-hover:opacity-100 p-2 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all ml-auto"
+                      >
+                         <PlusCircle size={14} />
+                      </button>
                     </div>
                   </td>
                   
@@ -225,7 +255,7 @@ export default function PuantajPage() {
                     return (
                       <td 
                         key={day} 
-                        className="p-1 border-r border-slate-50 text-center cursor-pointer select-none relative"
+                        className="p-1 border-r border-slate-50 text-center cursor-pointer select-none relative group/cell"
                       >
                         <div 
                           onClick={() => setActivePopover({ empId: emp.id, day })}
@@ -234,8 +264,21 @@ export default function PuantajPage() {
                           {config ? (
                             <config.icon size={16} />
                           ) : (
-                            <Plus size={12} className="text-slate-300 opacity-0 group-hover:opacity-100" />
+                            <Plus size={12} className="text-slate-300 opacity-0 group-hover/cell:opacity-100" />
                           )}
+                        </div>
+
+                        {/* Quick Selection Buttons on Hover (Desktop) */}
+                        <div className="absolute inset-0 flex items-center justify-center gap-0.5 opacity-0 group-hover/cell:opacity-100 pointer-events-none group-hover/cell:pointer-events-auto transition-opacity z-10 bg-white/10 backdrop-blur-[2px] rounded-xl overflow-hidden">
+                           <button onClick={(e) => { e.stopPropagation(); handleStatusSave(emp.id, day, 'M'); }} className="w-6 h-6 bg-emerald-500 text-white rounded-lg flex items-center justify-center hover:scale-110 transition-transform">
+                              <span className="text-[9px] font-black">M</span>
+                           </button>
+                           <button onClick={(e) => { e.stopPropagation(); handleStatusSave(emp.id, day, 'G'); }} className="w-6 h-6 bg-amber-500 text-white rounded-lg flex items-center justify-center hover:scale-110 transition-transform">
+                              <span className="text-[9px] font-black">G</span>
+                           </button>
+                           <button onClick={(e) => { e.stopPropagation(); handleStatusSave(emp.id, day, 'Yİ'); }} className="w-6 h-6 bg-blue-500 text-white rounded-lg flex items-center justify-center hover:scale-110 transition-transform">
+                              <span className="text-[9px] font-black">İ</span>
+                           </button>
                         </div>
 
                         {/* Popover Selection - Using Portal */}
