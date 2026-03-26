@@ -46,7 +46,7 @@ export async function getPlatformStats() {
     // Get total companies (from applications marked as APPROVED or active companies)
     // We count rows in the tenant/company table if we had one, but we use applications as a proxy for now
     const { count: totalCompanies, error: compErr } = await masterSupabase
-      .from("applications")
+      .from("company_applications")
       .select("*", { count: "exact", head: true })
       .eq("status", "APPROVED");
 
@@ -61,23 +61,27 @@ export async function getPlatformStats() {
 
     // Get pending applications
     const { count: pendingApps, error: pendErr } = await masterSupabase
-      .from("applications")
+      .from("company_applications")
       .select("*", { count: "exact", head: true })
       .eq("status", "PENDING");
 
     if (pendErr) throw pendErr;
 
-    // Get active subscriptions
-    const { count: activeSubs, error: subErr } = await masterSupabase
-      .from("subscriptions")
-      .select("*", { count: "exact", head: true })
-      .in("status", ["ACTIVE", "TRIALING"]);
-
-    if (subErr) throw subErr;
+    // Active subscriptions (optional table, handle if missing)
+    let activeSubs = 0;
+    try {
+      const { count, error: subErr } = await masterSupabase
+        .from("subscriptions")
+        .select("*", { count: "exact", head: true })
+        .in("status", ["ACTIVE", "TRIALING"]);
+      if (!subErr) activeSubs = count || 0;
+    } catch {
+      activeSubs = 0; // Table might not exist yet
+    }
 
     // Get recent 5 approved companies for activity feed
     const { data: recentCompanies } = await masterSupabase
-      .from("applications")
+      .from("company_applications")
       .select("company_name, created_at, contact_person_name")
       .eq("status", "APPROVED")
       .order("created_at", { ascending: false })
