@@ -187,10 +187,12 @@ export default function LeaveList() {
 
         {view === 'requests' ? (
           <div className="space-y-4">
-            <div className="flex gap-2 p-1 bg-white/40 rounded-2xl w-fit border border-white">
-              <FilterTab active={activeFilter === "PENDING"} onClick={() => setActiveFilter("PENDING")} label="Bekleyenler" count={leaves.filter(l => l.status === 'PENDING').length} color="blue" />
-              <FilterTab active={activeFilter === "APPROVED"} onClick={() => setActiveFilter("APPROVED")} label="Onaylananlar" count={leaves.filter(l => l.status === 'APPROVED').length} color="emerald" />
-              <FilterTab active={activeFilter === "REJECTED"} onClick={() => setActiveFilter("REJECTED")} label="Reddedilenler" count={leaves.filter(l => l.status === 'REJECTED').length} color="red" />
+            <div className="overflow-x-auto pb-2 scrollbar-hide">
+              <div className="flex gap-2 p-1 bg-white/40 rounded-2xl w-fit border border-white min-w-max">
+                <FilterTab active={activeFilter === "PENDING"} onClick={() => setActiveFilter("PENDING")} label="Bekleyenler" count={leaves.filter(l => l.status === 'PENDING').length} color="blue" />
+                <FilterTab active={activeFilter === "APPROVED"} onClick={() => setActiveFilter("APPROVED")} label="Onaylananlar" count={leaves.filter(l => l.status === 'APPROVED').length} color="emerald" />
+                <FilterTab active={activeFilter === "REJECTED"} onClick={() => setActiveFilter("REJECTED")} label="Reddedilenler" count={leaves.filter(l => l.status === 'REJECTED').length} color="red" />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4">

@@ -94,73 +94,51 @@ export default function ActiveCompaniesPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden">
+        {/* Desktop Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100 uppercase text-[10px] font-black tracking-widest text-slate-400">
-                <th className="p-4 md:p-6 font-semibold">Şirket Adı</th>
-                <th className="p-4 md:p-6 font-semibold">Kayıt Tarihi</th>
-                <th className="p-4 md:p-6 font-semibold">Abonelik Süresi</th>
-                <th className="p-4 md:p-6 font-semibold">Durum</th>
-                <th className="p-4 md:p-6 font-semibold text-right">
-                  İşlemler
-                </th>
+                <th className="p-6 font-semibold">Şirket Adı</th>
+                <th className="p-6 font-semibold">Kayıt Tarihi</th>
+                <th className="p-6 font-semibold">Abonelik Süresi</th>
+                <th className="p-6 font-semibold">Durum</th>
+                <th className="p-6 font-semibold text-right">İşlemler</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="p-12 text-center text-slate-400">
-                    Yükleniyor...
-                  </td>
+                  <td colSpan={5} className="p-12 text-center text-slate-400">Yükleniyor...</td>
                 </tr>
               ) : filteredCompanies.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={5}
-                    className="p-12 text-center text-slate-400 border-2 border-dashed border-slate-100 m-8 rounded-3xl"
-                  >
-                    Bulunamadı.
-                  </td>
+                  <td colSpan={5} className="p-12 text-center text-slate-400">Bulunamadı.</td>
                 </tr>
               ) : (
                 filteredCompanies.map((company) => (
-                  <tr
-                    key={company.id}
-                    className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group"
-                  >
-                    <td className="p-4 md:p-6">
+                  <tr key={company.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
+                    <td className="p-6">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center font-bold text-blue-600 uppercase text-lg shrink-0">
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center font-bold text-blue-600 uppercase text-lg shrink-0">
                           {company.name.charAt(0)}
                         </div>
-                        <span className="font-bold text-sm text-slate-900">
-                          {company.name}
-                        </span>
+                        <span className="font-bold text-sm text-slate-900">{company.name}</span>
                       </div>
                     </td>
-                    <td className="p-4 md:p-6 text-sm text-slate-500 font-medium">
-                      {new Date(
-                        company.subscription_start_at || company.created_at,
-                      ).toLocaleDateString("tr-TR")}
+                    <td className="p-6 text-sm text-slate-500 font-medium">
+                      {new Date(company.subscription_start_at || company.created_at).toLocaleDateString("tr-TR")}
                     </td>
-                    <td className="p-4 md:p-6 text-sm text-slate-600 font-bold">
-                      {company.subscription_period === "2_YEARS"
-                        ? "2 Yıl"
-                        : company.subscription_period === "3_YEARS"
-                          ? "3 Yıl"
-                          : company.subscription_period === "6_MONTHS"
-                            ? "6 Ay"
-                            : "1 Yıl"}
+                    <td className="p-6 text-sm text-slate-600 font-bold">
+                      {company.subscription_period === "2_YEARS" ? "2 Yıl" : company.subscription_period === "3_YEARS" ? "3 Yıl" : company.subscription_period === "6_MONTHS" ? "6 Ay" : "1 Yıl"}
                     </td>
-                    <td className="p-4 md:p-6">
+                    <td className="p-6">
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-100/50">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>{" "}
-                        Aktif
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div> Aktif
                       </span>
                     </td>
-                    <td className="p-4 md:p-6 text-right">
+                    <td className="p-6 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button className="text-slate-400 hover:text-blue-600 transition-colors p-2 rounded-lg hover:bg-blue-50 opacity-0 group-hover:opacity-100" title="Yönet">
                           <Settings2 size={18} />
@@ -180,6 +158,54 @@ export default function ActiveCompaniesPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile List (Cards) */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {isLoading ? (
+            <div className="p-12 text-center text-slate-400">Yükleniyor...</div>
+          ) : filteredCompanies.length === 0 ? (
+            <div className="p-12 text-center text-slate-400">Bulunamadı.</div>
+          ) : (
+            filteredCompanies.map((company) => (
+              <div key={company.id} className="p-6 space-y-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center font-black text-blue-600 text-xl shrink-0">
+                      {company.name.charAt(0)}
+                    </div>
+                    <div>
+                      <h4 className="font-black text-slate-900 leading-tight">{company.name}</h4>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
+                        {new Date(company.subscription_start_at || company.created_at).toLocaleDateString("tr-TR")} • Kayıtlı
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button 
+                      onClick={() => handleDeleteCompany(company.id, company.name)}
+                      disabled={deletingId === company.id}
+                      className="p-3 text-red-500 bg-red-50 rounded-2xl active:bg-red-100 transition-colors"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
+                   <div>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Abonelik</p>
+                      <p className="text-xs font-bold text-slate-900">
+                        {company.subscription_period === "2_YEARS" ? "2 Yıl" : company.subscription_period === "3_YEARS" ? "3 Yıl" : company.subscription_period === "6_MONTHS" ? "6 Ay" : "1 Yıl"}
+                      </p>
+                   </div>
+                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 border border-emerald-100/50 shadow-sm">
+                      Aktif
+                   </span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

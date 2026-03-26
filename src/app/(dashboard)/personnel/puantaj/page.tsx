@@ -177,7 +177,7 @@ export default function PuantajPage() {
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-slate-50/50">
-                <th className="sticky left-0 z-20 bg-slate-50/90 backdrop-blur-md p-6 border-r border-slate-100 text-left min-w-[280px]">
+                <th className="sticky left-0 z-20 bg-white md:bg-slate-50/90 backdrop-blur-md p-6 border-r border-slate-100 text-left min-w-[280px] shadow-[4px_0_8px_-4px_rgba(0,0,0,0.05)]">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Personel Bilgileri</span>
                 </th>
                 {daysArray.map(day => {
@@ -200,7 +200,7 @@ export default function PuantajPage() {
             <tbody>
               {filteredEmployees.map((emp) => (
                 <tr key={emp.id} className="border-t border-slate-50 group hover:bg-slate-50/50 transition-colors">
-                  <td className="sticky left-0 z-10 bg-white group-hover:bg-slate-50/90 backdrop-blur-md p-4 border-r border-slate-100">
+                  <td className="sticky left-0 z-10 bg-white group-hover:bg-slate-50 transition-colors p-4 border-r border-slate-100 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.05)]">
                     <div className="flex items-center gap-4">
                       {emp.photo_url ? (
                         <img src={emp.photo_url} className="w-10 h-10 rounded-2xl object-cover shadow-sm" alt="" />

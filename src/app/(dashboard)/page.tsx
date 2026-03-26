@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { 
   Users, Clock, Calendar, Shield, CreditCard, 
   Box, CheckCircle2, ArrowRight, Star, 
-  BarChart3, Cloud, Send, Loader2, X, ChevronRight, Circle, LogOut, Package, StickyNote
+  BarChart3, Cloud, Send, Loader2, X, ChevronRight, Circle, LogOut, Package, StickyNote, Menu
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -181,18 +181,20 @@ function QuickAction({ icon, label, href, color }: any) {
 
 // --- LANDING PAGE (UNAUTHENTICATED) ---
 function LandingPage() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   return (
     <div className="bg-white min-h-screen text-slate-900 overflow-x-hidden">
       {/* Navigation */}
-      <nav className="h-24 border-b border-slate-100 flex items-center justify-between px-8 md:px-20 bg-white/90 backdrop-blur-xl sticky top-0 z-50">
+      <nav className="h-20 md:h-24 border-b border-slate-100 flex items-center justify-between px-6 md:px-20 bg-white/90 backdrop-blur-xl sticky top-0 z-50">
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
             <Shield className="text-white" size={24} />
           </div>
-          <span className="text-2xl font-black tracking-tighter text-slate-900">WARVANTA</span>
+          <span className="text-xl md:text-2xl font-black tracking-tighter text-slate-900">WARVANTA</span>
         </div>
         
-        {/* Feature Links in Header */}
+        {/* Feature Links in Header - Desktop Only */}
         <div className="hidden lg:flex items-center gap-8 border-x border-slate-100 px-10 mx-10">
             <HeaderFeatureLink label="Otomatik Puantaj" />
             <HeaderFeatureLink label="İzin Hakediş" />
@@ -206,7 +208,57 @@ function LandingPage() {
             Hemen Başla
           </Link>
         </div>
+
+        {/* Mobile Menu Toggle */}
+        <button 
+          className="md:hidden p-2 text-slate-600 hover:bg-slate-50 rounded-xl"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        >
+          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
       </nav>
+
+      {/* Mobile Menu Drawer */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[51]"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+            <motion.div 
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              className="fixed inset-y-0 right-0 w-80 bg-white z-[52] p-8 flex flex-col shadow-2xl"
+            >
+              <div className="flex items-center justify-between mb-12">
+                <span className="text-xl font-black tracking-tighter">MENÜ</span>
+                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 bg-slate-100 rounded-xl text-slate-600">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-6 flex-1">
+                 <MobileNavItem href="#features" label="Özellikler" onClick={() => setIsMobileMenuOpen(false)} />
+                 <MobileNavItem href="#how-it-works" label="Nasıl Çalışır?" onClick={() => setIsMobileMenuOpen(false)} />
+                 <MobileNavItem href="/login" label="Müşteri Girişi" onClick={() => setIsMobileMenuOpen(false)} />
+              </div>
+
+              <Link 
+                href="/apply" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="bg-blue-600 text-white w-full py-4 rounded-2xl font-bold text-center shadow-xl shadow-blue-900/20 mt-auto"
+              >
+                Hemen Başla
+              </Link>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Hero Section */}
       <section className="relative pt-24 pb-32 px-8 overflow-hidden">
@@ -541,6 +593,18 @@ function NavItem({ href, label }: { href: string, label: string }) {
       {label}
     </Link>
   );
+}
+
+function MobileNavItem({ href, label, onClick }: { href: string, label: string, onClick?: () => void }) {
+    return (
+      <Link 
+        href={href} 
+        onClick={onClick}
+        className="w-full text-lg font-black text-slate-900 border-b border-slate-50 pb-4"
+      >
+        {label}
+      </Link>
+    );
 }
 
 function FeatureCard({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) {

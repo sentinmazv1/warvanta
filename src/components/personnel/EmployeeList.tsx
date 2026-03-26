@@ -61,7 +61,8 @@ export default function EmployeeList() {
       </div>
 
       <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
@@ -135,6 +136,52 @@ export default function EmployeeList() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile List (Cards) */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {isLoading ? (
+            <div className="p-12 text-center text-slate-400 text-sm italic">Yükleniyor...</div>
+          ) : filteredEmployees.length > 0 ? (
+            filteredEmployees.map((emp) => (
+              <div 
+                key={emp.id}
+                className="p-6 active:bg-slate-50 transition-colors flex items-center justify-between gap-4"
+                onClick={() => router.push(`/personnel/${emp.id}`)}
+              >
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center font-bold text-slate-500 text-lg overflow-hidden border border-slate-200 shrink-0">
+                    {emp.photo_url ? (
+                      <img src={emp.photo_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      `${emp.first_name[0]}${emp.last_name[0]}`
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-black text-slate-900 truncate">{emp.first_name} {emp.last_name}</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5 truncate">
+                      {emp.position_name || 'Belirtilmedi'}
+                    </p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${
+                        emp.status === 'ACTIVE' 
+                          ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
+                          : 'bg-slate-100 text-slate-500 border border-slate-200'
+                      }`}>
+                        {emp.status === 'ACTIVE' ? 'Aktif' : 'Pasif'}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-medium">
+                        {new Date(emp.hire_date).toLocaleDateString('tr-TR')}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <ChevronRight size={20} className="text-slate-300 shrink-0" />
+              </div>
+            ))
+          ) : (
+            <div className="p-12 text-center text-slate-400 text-sm italic">Kayıt bulunamadı.</div>
+          )}
         </div>
       </div>
 
