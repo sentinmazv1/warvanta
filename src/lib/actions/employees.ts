@@ -138,7 +138,20 @@ export async function addEmployeeDocument(employeeId: string, name: string, file
     .single();
 
   if (error) throw error;
+  revalidatePath(`/personnel/${employeeId}`);
   return data;
+}
+
+export async function deleteEmployeeDocument(id: string, employeeId: string) {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from('employee_documents')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
+  revalidatePath(`/personnel/${employeeId}`);
+  return { success: true };
 }
 
 export async function getCelebrations() {

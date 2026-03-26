@@ -6,7 +6,7 @@ import { getEmployee, updateEmployee, getEmployeeDocuments } from "@/lib/actions
 import { 
   ArrowLeft, Mail, Phone, Calendar, MapPin, 
   Briefcase, CreditCard, Save, Loader2, Camera,
-  FileText, Clock, Shield, CheckCircle2, Trash2,
+  FileText, Clock, Shield, CheckCircle2, Trash2, X,
   Hash, Users, Droplets as DropletsIcon, Heart as HeartIcon, GraduationCap as GraduationCapIcon, Lightbulb as LightbulbIcon, Download as DownloadIcon,
   Laptop, Smartphone, Monitor
 } from "lucide-react";
@@ -24,6 +24,9 @@ export default function PersonnelDetailPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [isUploading, setIsUploading] = useState(false);
+  const [isDocModalOpen, setIsDocModalOpen] = useState(false);
+  const [newDocName, setNewDocName] = useState("");
+  const [newDocCategory, setNewDocCategory] = useState("KİMLİK");
 
   useEffect(() => {
     if (id) {
@@ -50,6 +53,54 @@ export default function PersonnelDetailPage() {
         console.error("Error loading documents:", err);
     }
   }
+
+  const handleDocumentDelete = async (docId: string) => {
+    if (!confirm("Bu dosyayı silmek istediğinize emin misiniz?")) return;
+    try {
+        const { deleteEmployeeDocument } = await import("@/lib/actions/employees");
+        await deleteEmployeeDocument(docId, id as string);
+        loadDocuments();
+        setMessage({ type: "success", text: "Dosya silindi." });
+    } catch (err: any) {
+        setMessage({ type: "error", text: "Dosya silinemedi: " + err.message });
+    }
+  };
+
+  const handleDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !employee) return;
+
+    setIsUploading(true);
+    try {
+      const { createClient } = await import("@/lib/supabase/client");
+      const { addEmployeeDocument } = await import("@/lib/actions/employees");
+      const supabase = createClient();
+      
+      const fileExt = file.name.split('.').pop();
+      const fileName = newDocName || file.name.split('.')[0];
+      const filePath = `${employee.id}/docs/${Math.random()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('documents')
+        .getPublicUrl(filePath);
+
+      await addEmployeeDocument(employee.id, fileName, publicUrl, newDocCategory);
+      setIsDocModalOpen(false);
+      setNewDocName("");
+      loadDocuments();
+      setMessage({ type: "success", text: "Dosya yüklendi." });
+    } catch (err: any) {
+      setMessage({ type: "error", text: "Dosya yüklenemedi: " + err.message });
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   async function loadEmployee() {
     try {
@@ -344,39 +395,120 @@ export default function PersonnelDetailPage() {
             </div>
 
             <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 flex flex-col gap-4">
-                <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-bold text-slate-800 text-sm">Yüklenen Dosyalar</h4>
-                    <span className="bg-blue-50 text-blue-600 text-[10px] font-black px-2 py-0.5 rounded-lg shadow-sm">{documents.length} DOSYA</span>
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-bold text-slate-800 text-sm">Yüklenen Dosyalar</h4>
+                <div className="flex items-center gap-2">
+                  <span className="bg-blue-50 text-blue-600 text-[10px] font-black px-2 py-0.5 rounded-lg shadow-sm">{documents.length} DOSYA</span>
+                  <button 
+                    onClick={() => setIsDocModalOpen(true)}
+                    className="p-1 px-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-[9px] font-black uppercase"
+                  >
+                    Yükle
+                  </button>
                 </div>
-                <div className="space-y-2">
-                    {documents.map(doc => (
-                        <div key={doc.id} className="bg-slate-50 rounded-2xl p-4 flex items-center justify-between border border-slate-100">
-                             <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm text-blue-500">
-                                    <FileText size={16} />
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold text-slate-900">{doc.name}</p>
-                                    <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest">{doc.category}</p>
-                                </div>
-                            </div>
-                            <a 
-                                href={doc.file_url} 
-                                target="_blank" 
-                                className="p-2 text-slate-400 hover:text-blue-600 transition-colors"
-                            >
-                                <DownloadIcon size={16} />
-                            </a>
-                        </div>
-                    ))}
-                    {documents.length === 0 && (
-                        <p className="text-[10px] text-slate-400 italic text-center py-4 bg-slate-50 rounded-2xl">Yüklenen dosya bulunmuyor.</p>
-                    )}
-                </div>
+              </div>
+              <div className="space-y-2">
+                {documents.map(doc => (
+                  <div key={doc.id} className="bg-slate-50 rounded-2xl p-4 flex items-center justify-between border border-slate-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm text-blue-500">
+                        <FileText size={16} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-900">{doc.name}</p>
+                        <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest">{doc.category}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <a 
+                        href={doc.file_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="p-2 text-slate-400 hover:text-blue-600 transition-colors"
+                      >
+                        <DownloadIcon size={16} />
+                      </a>
+                      <button 
+                        onClick={() => handleDocumentDelete(doc.id)}
+                        className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {documents.length === 0 && (
+                  <p className="text-[10px] text-slate-400 italic text-center py-4 bg-slate-50 rounded-2xl">Yüklenen dosya bulunmuyor.</p>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Document Upload Modal */}
+      {isDocModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+            <div className="bg-white rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl space-y-6">
+                <div className="flex items-center justify-between">
+                    <h3 className="text-xl font-black text-slate-900">Dosya Yükle</h3>
+                    <button onClick={() => setIsDocModalOpen(false)} className="p-2 bg-slate-100 rounded-xl text-slate-500">
+                        <X size={20} />
+                    </button>
+                </div>
+
+                <div className="space-y-4">
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Dosya Adı</label>
+                        <input 
+                            className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 text-sm font-medium"
+                            placeholder="Örn: Kimlik Fotokopisi"
+                            value={newDocName}
+                            onChange={(e) => setNewDocName(e.target.value)}
+                        />
+                    </div>
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Kategori</label>
+                        <select 
+                            className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 text-sm font-bold"
+                            value={newDocCategory}
+                            onChange={(e) => setNewDocCategory(e.target.value)}
+                        >
+                            <option value="KİMLİK">Kimlik / Pasaport</option>
+                            <option value="SÖZLEŞME">İş Sözleşmesi</option>
+                            <option value="CV">Özgeçmiş (CV)</option>
+                            <option value="SAĞLIK">Sağlık Raporu</option>
+                            <option value="EĞİTİM">Diploma / Sertifika</option>
+                            <option value="DİĞER">Diğer</option>
+                        </select>
+                    </div>
+
+                    <div className="pt-4">
+                        <label className="w-full flex flex-col items-center justify-center p-8 border-2 border-dashed border-slate-200 rounded-3xl hover:bg-slate-50 hover:border-blue-400 transition-all cursor-pointer group">
+                            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                <DownloadIcon size={24} className="rotate-180" />
+                            </div>
+                            <span className="text-sm font-bold text-slate-900">Dosyayı Seçin</span>
+                            <p className="text-[10px] text-slate-400 font-medium mt-1 uppercase tracking-widest">PDF, JPG, PNG (Maks 10MB)</p>
+                            <input 
+                                type="file" 
+                                className="hidden" 
+                                onChange={handleDocumentUpload} 
+                                disabled={isUploading} 
+                            />
+                        </label>
+                    </div>
+                </div>
+
+                {isUploading && (
+                    <div className="flex items-center justify-center gap-3 text-blue-600 font-bold text-sm">
+                        <Loader2 className="animate-spin" size={18} />
+                        Yükleniyor...
+                    </div>
+                )}
+            </div>
+        </div>
+      )}
     </div>
   );
 }
