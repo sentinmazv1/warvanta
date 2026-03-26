@@ -24,9 +24,9 @@ export default function ActiveCompaniesPage() {
     try {
       const data = await getActiveCompanies();
       setCompanies(data);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("Şirket verileri yüklenirken bir hata oluştu.");
+      alert("Şirket verileri yüklenirken hata: " + (err.message || "Bilinmeyen hata"));
     } finally {
       setIsLoading(false);
     }

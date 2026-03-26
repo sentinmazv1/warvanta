@@ -16,10 +16,15 @@ export default function AdminApplicationsPage() {
 
   async function loadApps() {
     setIsLoading(true);
-    const data = await getApplications();
-    console.log("Fetched apps:", data);
-    setApps(data);
-    setIsLoading(false);
+    try {
+      const data = await getApplications();
+      setApps(data);
+    } catch (err: any) {
+      console.error(err);
+      alert("Başvurular yüklenirken hata: " + (err.message || "Bilinmeyen hata"));
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   const [selectedPeriods, setSelectedPeriods] = useState<Record<string, string>>({});
