@@ -3,6 +3,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { createClient as createServerClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
 
 const SUPERADMIN_EMAILS = ["ibrahimsentinmaz@gmail.com"];
 
@@ -110,4 +111,104 @@ export async function getActiveCompanies() {
     console.error("Error fetching companies:", error);
     throw new Error("Failed to fetch companies.");
   }
+}
+
+/**
+ * Retrieves all company applications.
+ */
+export async function getApplications() {
+  const isSuperadmin = await checkSuperadmin();
+  if (!isSuperadmin) throw new Error("Unauthorized");
+
+  const { data, error } = await masterSupabase
+    .from("company_applications")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Approves a company application and initializes the company record.
+ */
+export async function approveApplication(
+  appId: string,
+  period: string = "1_YEAR",
+) {
+  const isSuperadmin = await checkSuperadmin();
+  if (!isSuperadmin) throw new Error("Unauthorized");
+
+  // 1. Get Application
+  const { data: app, error: appError } = await masterSupabase
+    .from("company_applications")
+    .select("*")
+    .eq("id", appId)
+    .single();
+
+  if (appError) throw appError;
+
+  // 2. Create Company
+  const { data: company, error: companyError } = await masterSupabase
+    .from("companies")
+    .insert([
+      {
+        name: app.company_name,
+        subscription_period: period,
+        subscription_start_at: new Date().toISOString(),
+      },
+    ])
+    .select()
+    .single();
+
+  if (companyError) throw companyError;
+
+  // 3. Update Application Status
+  await masterSupabase
+    .from("company_applications")
+    .update({ status: "APPROVED", processed_at: new Date().toISOString() })
+    .eq("id", appId);
+
+  revalidatePath("/master/applications");
+  revalidatePath("/master");
+  return { success: true };
+}
+
+/**
+ * Rejects a company application with a reason.
+ */
+export async function rejectApplication(appId: string, reason: string) {
+  const isSuperadmin = await checkSuperadmin();
+  if (!isSuperadmin) throw new Error("Unauthorized");
+
+  const { error } = await masterSupabase
+    .from("company_applications")
+    .update({
+      status: "REJECTED",
+      processed_at: new Date().toISOString(),
+      notes: reason,
+    })
+    .eq("id", appId);
+
+  if (error) throw error;
+  revalidatePath("/master/applications");
+  return { success: true };
+}
+
+/**
+ * Deletes a company application record permanently.
+ */
+export async function deleteApplication(appId: string) {
+  const isSuperadmin = await checkSuperadmin();
+  if (!isSuperadmin) throw new Error("Unauthorized");
+
+  const { error } = await masterSupabase
+    .from("company_applications")
+    .delete()
+    .eq("id", appId);
+
+  if (error) throw error;
+  revalidatePath("/master/applications");
+  revalidatePath("/master");
+  return { success: true };
 }
