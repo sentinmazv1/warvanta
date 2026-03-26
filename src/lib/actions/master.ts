@@ -25,7 +25,12 @@ export async function checkSuperadmin() {
   } = await supabase.auth.getUser();
 
   if (!user || !user.email) return false;
-  return SUPERADMIN_EMAILS.includes(user.email);
+  
+  const userEmail = user.email.toLowerCase();
+  const isAllowed = SUPERADMIN_EMAILS.some(email => email.toLowerCase() === userEmail);
+  
+  console.log(`Superadmin check for ${userEmail}: ${isAllowed}`);
+  return isAllowed;
 }
 
 /**
