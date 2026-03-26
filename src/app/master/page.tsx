@@ -17,8 +17,8 @@ export default async function MasterDashboardPage() {
   try {
     stats = await getPlatformStats();
   } catch (error) {
-    // If unauthorized, the layout should technically catch it, but double check here
-    redirect("/");
+    // Let the layout handle the unauthorized state
+    return null;
   }
 
   const statCards = [
