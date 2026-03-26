@@ -1,18 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getActiveCompanies } from "@/lib/actions/master";
+import { getActiveCompanies, deleteCompany } from "@/lib/actions/master";
 import {
   Building2,
   Search,
   MoreVertical,
   ExternalLink,
   Filter,
+  Trash2,
+  Settings2,
 } from "lucide-react";
 
 export default function ActiveCompaniesPage() {
   const [companies, setCompanies] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -30,6 +33,27 @@ export default function ActiveCompaniesPage() {
       alert("Şirket verileri yüklenirken hata: " + (err.message || "Bilinmeyen hata"));
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function handleDeleteCompany(id: string, name: string) {
+    if (!window.confirm(`"${name}" şirketini ve tüm verilerini kalıcı olarak silmek istediğinize emin misiniz?`)) {
+      return;
+    }
+
+    setDeletingId(id);
+    try {
+      const result = await deleteCompany(id);
+      if (result.success) {
+        await loadCompanies();
+      } else {
+        alert("Silme işlemi başarısız: " + result.error);
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert("Bir hata oluştu.");
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -137,9 +161,19 @@ export default function ActiveCompaniesPage() {
                       </span>
                     </td>
                     <td className="p-4 md:p-6 text-right">
-                      <button className="text-slate-400 hover:text-blue-600 transition-colors p-2 rounded-lg hover:bg-blue-50 opacity-0 group-hover:opacity-100">
-                        <MoreVertical size={18} />
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button className="text-slate-400 hover:text-blue-600 transition-colors p-2 rounded-lg hover:bg-blue-50 opacity-0 group-hover:opacity-100" title="Yönet">
+                          <Settings2 size={18} />
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteCompany(company.id, company.name)}
+                          disabled={deletingId === company.id}
+                          className={`text-slate-400 hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-red-50 opacity-0 group-hover:opacity-100 ${deletingId === company.id ? 'animate-pulse' : ''}`}
+                          title="Sil"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

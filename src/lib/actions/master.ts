@@ -236,3 +236,27 @@ export async function deleteApplication(appId: string) {
   revalidatePath("/master");
   return { success: true };
 }
+
+/**
+ * Permanently deletes a company and its associated records.
+ */
+export async function deleteCompany(companyId: string) {
+  const isSuperadmin = await checkSuperadmin();
+  if (!isSuperadmin) throw new Error("Unauthorized");
+
+  // Since we have foreign key constraints with ON DELETE CASCADE in most tables,
+  // deleting the company record should clean up most associated data.
+  const { error } = await masterSupabase
+    .from("companies")
+    .delete()
+    .eq("id", companyId);
+
+  if (error) {
+    console.error("Error deleting company:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/master/companies");
+  revalidatePath("/master");
+  return { success: true };
+}

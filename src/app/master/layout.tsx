@@ -27,9 +27,17 @@ export default async function MasterLayout({
         <p className="mt-4 text-slate-500 leading-relaxed">
           Bu alan sadece platform yöneticilerine özeldir. Eğer yöneticiyseniz, doğru e-posta adresi ile giriş yaptığınızdan emin olun.
         </p>
-        <div className="mt-8 p-6 bg-slate-50 rounded-3xl border border-slate-100 text-left">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Giriş Yapılan E-posta</p>
-          <p className="text-sm font-bold text-slate-700">{user?.email || "Oturum açılmamış veya e-posta bulunamadı"}</p>
+        <div className="mt-8 p-6 bg-slate-50 rounded-3xl border border-slate-100 text-left space-y-4">
+          <div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Giriş Yapılan E-posta</p>
+            <p className="text-sm font-bold text-slate-700">{user?.email || "Oturum açılmamış veya e-posta bulunamadı"}</p>
+          </div>
+          <div className="pt-4 border-t border-slate-200">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Sistem Yapılandırması</p>
+            <p className={`text-sm font-bold ${process.env.SUPABASE_SERVICE_ROLE_KEY ? 'text-emerald-600' : 'text-red-600'}`}>
+              {process.env.SUPABASE_SERVICE_ROLE_KEY ? '✓ Hizmet Anahtarı Tanımlı' : '✗ Hizmet Anahtarı (SERVICE_ROLE) Bulunamadı'}
+            </p>
+          </div>
         </div>
         <div className="mt-10 flex items-center justify-center gap-4">
           <a href="/" className="px-6 py-3 bg-white border border-slate-200 rounded-2xl font-bold text-sm text-slate-600 hover:bg-slate-50 transition-all">Ana Sayfa</a>
