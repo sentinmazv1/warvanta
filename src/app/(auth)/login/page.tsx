@@ -145,7 +145,7 @@ export default function LoginPage() {
             </button>
             <button 
               type="button"
-              onClick={() => window.location.href = "/auth/signup?email=" + email}
+              onClick={() => window.location.href = "/signup?email=" + email}
               disabled={isSubmitting || isConfirming}
               className="bg-slate-100 text-slate-700 py-3 rounded-xl font-bold hover:bg-slate-200 transition-all disabled:opacity-50"
             >

@@ -2,11 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { 
-  getLeaves, 
   approveLeave, 
   rejectLeave, 
-  getLeaveBalances, 
-  getLeaveSummary,
+  getLeaveDashboardData,
   LeaveBalance 
 } from "@/lib/actions/leaves";
 import { 
@@ -57,11 +55,7 @@ export default function LeaveList() {
           params = { onlySelf: true };
       }
 
-      const [leaveData, balanceData, summaryData] = await Promise.all([
-        getLeaves(params),
-        getLeaveBalances(),
-        getLeaveSummary()
-      ]);
+      const { leaves: leaveData, balances: balanceData, summary: summaryData } = await getLeaveDashboardData(params);
 
       setLeaves(leaveData);
       setBalances(balanceData);
@@ -75,12 +69,22 @@ export default function LeaveList() {
 
   async function handleApprove(id: string) {
     if (!confirm("Bu izin talebini onaylamak üzeresiniz. Onaylıyor musunuz?")) return;
+    
+    // OPTIMISTIC UPDATE
+    const approvedLeave = leaves.find(l => l.id === id);
+    setLeaves(prev => prev.map(l => l.id === id ? { ...l, status: 'APPROVED' } : l));
+    setSummary(prev => ({
+      ...prev,
+      pending: Math.max(0, prev.pending - 1),
+      approved_month: prev.approved_month + (approvedLeave?.day_count || 0)
+    }));
+
     setIsProcessing(id);
     try {
       await approveLeave(id);
-      loadData();
     } catch (err) {
       console.error(err);
+      loadData(); // Revert on failure
     } finally {
       setIsProcessing(null);
     }
@@ -90,12 +94,19 @@ export default function LeaveList() {
     const reason = prompt("Lütfen red gerekçesini yazınız:");
     if (reason === null) return;
     
+    // OPTIMISTIC UPDATE
+    setLeaves(prev => prev.map(l => l.id === id ? { ...l, status: 'REJECTED', rejection_reason: reason } : l));
+    setSummary(prev => ({
+      ...prev,
+      pending: Math.max(0, prev.pending - 1)
+    }));
+
     setIsProcessing(id);
     try {
       await rejectLeave(id, reason);
-      loadData();
     } catch (err) {
       console.error(err);
+      loadData();
     } finally {
       setIsProcessing(null);
     }

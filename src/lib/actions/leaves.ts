@@ -250,3 +250,121 @@ export async function getLeaveSummary() {
     approved_month: approvedMonth
   };
 }
+
+export async function getLeaveDashboardData(params?: { departmentId?: string | null, onlySelf?: boolean }) {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { leaves: [], balances: [], summary: { pending: 0, approved_month: 0 } };
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('company_id, role, id')
+    .eq('id', user.id)
+    .single();
+
+  if (!profile?.company_id) return { leaves: [], balances: [], summary: { pending: 0, approved_month: 0 } };
+
+  // 1. Fetch Leaves with permissions
+  let leavesQuery = supabase
+    .from('leaves')
+    .select('*, employee:employees!inner(first_name, last_name, department_id, hire_date)')
+    .eq('company_id', profile.company_id);
+
+  if (params?.onlySelf) {
+     const { data: emp } = await supabase
+        .from('employees')
+        .select('id')
+        .eq('profile_id', user.id)
+        .single();
+     if (emp) leavesQuery = leavesQuery.eq('employee_id', emp.id);
+  } else if (params?.departmentId) {
+     leavesQuery = leavesQuery.eq('employee.department_id', params.departmentId);
+  }
+
+  const [leavesRes, empRes, puantajLeavesRes] = await Promise.all([
+    leavesQuery.order('created_at', { ascending: false }),
+    supabase
+      .from('employees')
+      .select('id, first_name, last_name, hire_date')
+      .eq('company_id', profile.company_id)
+      .eq('status', 'ACTIVE'),
+    supabase
+      .from('puantaj_records')
+      .select('employee_id, attendance_date')
+      .eq('company_id', profile.company_id)
+      .eq('status', 'Yİ')
+  ]);
+
+  if (leavesRes.error) throw leavesRes.error;
+  if (empRes.error) throw empRes.error;
+  if (puantajLeavesRes.error) throw puantajLeavesRes.error;
+
+  const leaves = leavesRes.data as any[];
+  const employees = empRes.data;
+  const puantajLeaves = puantajLeavesRes.data;
+
+  // 2. Calculate Balances
+  const today = new Date();
+  const balances: LeaveBalance[] = employees.map(emp => {
+    const hireDate = new Date(emp.hire_date);
+    const seniorityYears = Math.floor((today.getTime() - hireDate.getTime()) / (1000 * 60 * 60 * 24 * 365));
+    
+    let totalEarned = 0;
+    for (let year = 1; year <= seniorityYears; year++) {
+      if (year <= 5) totalEarned += 14;
+      else if (year <= 15) totalEarned += 20;
+      else totalEarned += 26;
+    }
+
+    const usedDates = new Set<string>();
+    leaves
+      .filter(l => l.employee_id === emp.id && l.status === 'APPROVED')
+      .forEach(l => {
+         const start = new Date(l.start_date);
+         const end = new Date(l.end_date);
+         const curr = new Date(start);
+         while (curr <= end) {
+            usedDates.add(curr.toISOString().split('T')[0]);
+            curr.setDate(curr.getDate() + 1);
+         }
+      });
+
+    puantajLeaves
+      .filter(p => p.employee_id === emp.id)
+      .forEach(p => {
+         usedDates.add(p.attendance_date);
+      });
+
+    const used = usedDates.size;
+
+    return {
+      employee_id: emp.id,
+      first_name: emp.first_name,
+      last_name: emp.last_name,
+      hire_date: emp.hire_date,
+      total_earned: totalEarned,
+      total_used: used,
+      remaining: totalEarned - used,
+      seniority_years: seniorityYears
+    };
+  });
+
+  // 3. Calculate Summary
+  const pendingCount = leaves.filter(l => l.status === 'PENDING').length;
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0,0,0,0);
+
+  const approvedMonth = leaves
+    .filter(l => l.status === 'APPROVED' && new Date(l.start_date) >= startOfMonth)
+    .reduce((sum, l) => sum + (l.day_count || 0), 0);
+
+  return {
+    leaves,
+    balances,
+    summary: {
+      pending: pendingCount,
+      approved_month: approvedMonth
+    }
+  };
+}

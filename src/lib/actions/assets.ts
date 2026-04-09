@@ -60,30 +60,40 @@ export async function addAsset(formData: Partial<Asset>) {
 
   if (!profile?.company_id) throw new Error("Şirket bulunamadı.");
 
+  const assetData = {
+    ...formData,
+    company_id: profile.company_id,
+    employee_id: formData.employee_id || null, // Handle empty string as null for UUID column
+    status: formData.employee_id ? 'ASSIGNED' : 'AVAILABLE',
+    assigned_at: formData.employee_id ? new Date().toISOString() : null
+  };
+
   const { data, error } = await supabase
     .from('assets')
-    .insert([{
-      ...formData,
-      company_id: profile.company_id,
-      status: formData.employee_id ? 'ASSIGNED' : 'AVAILABLE',
-      assigned_at: formData.employee_id ? new Date().toISOString() : null
-    }])
+    .insert([assetData])
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error('Supabase error inserting asset:', error);
+    throw new Error(error.message);
+  }
 
   // If assigned, add a log entry
   if (formData.employee_id) {
-    await supabase
-      .from('asset_logs')
-      .insert([{
-        asset_id: data.id,
-        employee_id: formData.employee_id,
-        action: 'ASSIGN',
-        note: 'Yeni kayıt ile birlikte zimmetlendi.',
-        created_by: user.id
-      }]);
+      try {
+        await supabase
+          .from('asset_logs')
+          .insert([{
+            asset_id: data.id,
+            employee_id: formData.employee_id,
+            action: 'ASSIGNED',
+            note: 'Yeni kayıt ile birlikte zimmetlendi.',
+            created_by: user.id
+          }]);
+      } catch (logError) {
+        console.error('Error creating asset log:', logError);
+      }
   }
 
   revalidatePath('/assets');
@@ -114,7 +124,7 @@ export async function assignAsset(assetId: string, employeeId: string, note?: st
     .insert([{
       asset_id: assetId,
       employee_id: employeeId,
-      action: 'ASSIGN',
+      action: 'ASSIGNED',
       note: note || 'Personele zimmetlendi.',
       created_by: user.id
     }]);
@@ -152,7 +162,7 @@ export async function returnAsset(assetId: string, note?: string) {
     .insert([{
       asset_id: assetId,
       employee_id: asset?.employee_id,
-      action: 'RETURN',
+      action: 'RETURNED',
       note: note || 'Zimmet iade alındı.',
       created_by: user.id
     }]);

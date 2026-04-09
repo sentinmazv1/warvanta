@@ -204,6 +204,9 @@ function LandingPage() {
 
         <div className="hidden md:flex items-center gap-6">
           <NavItem href="/login" label="Müşteri Girişi" />
+          <Link href="/signup" className="text-sm font-bold text-slate-400 hover:text-blue-600 transition-colors">
+            Kayıt Ol
+          </Link>
           <Link href="/apply" className="bg-blue-600 text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-blue-900/20 hover:bg-blue-700 hover:-translate-y-0.5 transition-all text-sm">
             Hemen Başla
           </Link>
@@ -250,6 +253,7 @@ function LandingPage() {
                  <MobileNavItem href="#features" label="Özellikler" onClick={() => setIsMobileMenuOpen(false)} />
                  <MobileNavItem href="#how-it-works" label="Nasıl Çalışır?" onClick={() => setIsMobileMenuOpen(false)} />
                  <MobileNavItem href="/login" label="Müşteri Girişi" onClick={() => setIsMobileMenuOpen(false)} />
+                 <MobileNavItem href="/signup" label="Kayıt Ol" onClick={() => setIsMobileMenuOpen(false)} />
               </div>
 
               <Link 

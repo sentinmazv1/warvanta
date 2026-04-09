@@ -43,26 +43,26 @@ export async function checkOnboardingStatus() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { isAuthenticated: false, hasCompany: false };
 
+  // Combine profile and employee/department checks into ONE query
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, company_id, role, first_name')
+    .select(`
+      id, company_id, role, first_name,
+      employees:employees!profile_id(
+        department_id, 
+        departments(permissions)
+      )
+    `)
     .eq('id', user.id)
     .single();
 
   let departmentId = null;
   let permissions = null;
 
-  if (profile?.company_id) {
-    const { data: employee } = await supabase
-      .from('employees')
-      .select('department_id, departments(permissions)')
-      .eq('profile_id', user.id)
-      .single();
-    
-    if (employee) {
-        departmentId = employee.department_id;
-        permissions = (employee.departments as any)?.permissions;
-    }
+  if (profile && (profile as any).employees && (profile as any).employees.length > 0) {
+    const emp = (profile as any).employees[0];
+    departmentId = emp.department_id;
+    permissions = emp.departments?.permissions;
   }
 
   return {
